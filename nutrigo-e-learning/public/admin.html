@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>NutriGo — Admin Dashboard</title>
+  <link rel="stylesheet" href="admin.css" />
+</head>
+<body>
+  <aside class="sidebar">
+    <h2>NutriGo Admin</h2>
+    <nav>
+      <a href="dashboard.html">Courses</a>
+      <a href="admin.html" class="active">Add Course</a>
+    </nav>
+  </aside>
+
+  <main class="content">
+    <h1>Add New Course</h1>
+    <form id="courseForm" enctype="multipart/form-data">
+  <div class="form-group">
+    <label>Title</label>
+    <input name="title" type="text" placeholder="Course Title" required />
+  </div>
+
+  <div class="form-group">
+    <label>Description</label>
+    <textarea name="description" placeholder="Course Description"></textarea>
+  </div>
+
+  <div class="form-group">
+    <label>Reference Image</label>
+    <input name="refImage" type="file" accept="image/png, image/jpeg" required />
+  </div>
+
+  <hr />
+  <h3>Course Content Blocks</h3>
+  <div id="blocksContainer"></div>
+
+  <div class="form-group">
+    <select id="blockType">
+      <option value="text">Text</option>
+      <option value="image">Image URL</option>
+      <option value="video">Video URL</option>
+    </select>
+    <input id="blockContent" type="text" placeholder="Enter content or URL..." />
+    <button type="button" id="addBlockBtn">➕ Add Block</button>
+  </div>
+
+  <button type="submit" class="btn">Add Course</button>
+</form>
+
+  </main>
+
+  <script>
+  let blocks = [];
+
+  function addBlock() {
+  const type = document.getElementById('blockType').value;
+  const content = document.getElementById('blockContent').value.trim();
+  if (!content) return alert('Please enter some content');
+
+  blocks.push({ type, content });
+
+  const div = document.createElement('div');
+  div.innerHTML = `<strong>${type.toUpperCase()}</strong>: ${content}`;
+  div.className = 'block-preview';
+  document.getElementById('blocksContainer').appendChild(div);
+
+  document.getElementById('blockContent').value = '';
+
+  console.log('✅ Block added:', { type, content });
+}
+
+document.getElementById('addBlockBtn').addEventListener('click', addBlock);
+
+  document.getElementById('courseForm').onsubmit = async e => {
+  e.preventDefault();
+
+  console.log("🚀 Submitting course form...", blocks);
+  if (!blocks.length) {
+    return alert("No content blocks were added.");
+  }
+
+  const form = new FormData(e.target);
+  const token = localStorage.getItem('token');
+
+  // Step 1: Upload course
+  const res = await fetch('/api/admin/courses', {
+    method: 'POST',
+    headers: { Authorization: 'Bearer ' + token },
+    body: form
+  });
+
+  let courseData;
+  try {
+    courseData = await res.json();
+  } catch {
+    return alert('Server error. Could not parse response.');
+  }
+
+  if (!res.ok) {
+    return alert(courseData.message || 'Failed to create course');
+  }
+
+  // Step 2: Upload blocks
+  const blocksRes = await fetch(`/api/admin/courses/${courseData.id}/blocks`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: 'Bearer ' + token
+    },
+    body: JSON.stringify({ blocks })
+  });
+
+  const blockMsg = await blocksRes.json();
+  alert(blockMsg.message);
+
+  e.target.reset();
+  blocks = []; // reset after everything is done
+  document.getElementById('blocksContainer').innerHTML = '';
+};
+</script>
+</body>
+</html>

@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF‑8" />
+  <meta name="viewport" content="width=device‑width, initial-scale=1" />
+  <title>NutriGo – Dashboard</title>
+  <link rel="stylesheet" href="dashboard.css" />
+</head>
+<body>
+
+  <div class="page-wrapper">
+    <div class="content-wrapper">
+      <aside class="sidebar">
+        <h2>NutriGo</h2>
+        <nav>
+          <a href="dashboard.html" class="active">Dashboard</a>
+          <a href="submit.html">Log Meal</a>
+        </nav>
+      </aside>
+      <section class="main-content">
+
+        <header class="top-header">
+          <div class="header-left">
+            <h1>Welcome back, <span id="username">User</span>!</h1>
+            <p id="currentDate"></p>
+          </div>
+          <nav class="header-right">
+            <a href="#">About</a>
+            <a href="#">Services</a>
+            <a href="#">Meet Us</a>
+            <button id="logout">Logout</button>
+          </nav>
+        </header>
+
+        <section class="hero">
+          <img src="https://cdn270.picsart.com/eb9b6510-2177-47a2-8aa5-b0982418115c/490287954022201.gif"
+               alt="Healthy teens enjoying a meal" />
+          <div class="hero-text">
+            <h2>Fuel Your Growth with NutriGo 🌱</h2>
+            <p>Adolescence is the fastest growth period... sharper minds, and brighter futures.</p>
+          </div>
+        </section>
+
+        <section class="info-panel">
+          <h2>Why It Matters</h2>
+          <p>Adolescence is a phase of fast growth, your body needs more nutrients now than ever. Studies show that teens need a steady supply of vitamins and minerals to support bone health, brain power, and immune function. <strong>NutriGo</strong> helps you track meals and learn about healthy food choices, setting you up for success now and later!</p>
+        </section>
+
+        <div class="stats-cards">
+          <div class="stat-card">
+            <h3>Meals Logged</h3>
+            <p id="mealsLogged">0</p>
+          </div>
+          <div class="stat-card">
+            <h3>Healthy Meals</h3>
+            <p id="healthyCount">0</p>
+          </div>
+          <div class="stat-card">
+            <h3>Goals Met</h3>
+            <p id="goalsMet">0</p>
+          </div>
+        </div>
+
+        <h2>Continue Learning</h2>
+        <div class="cards" id="coursesGrid"></div>
+
+        <section class="daily-tip">
+          <h2>🌟 Daily Tip:</h2>
+          <p id="dailyTip">Try adding a vegetable or fruit in every meal today!</p>
+        </section>
+
+        <h2>Recent Activity</h2>
+        <ul class="activity-log" id="activityLog"></ul>
+      </section>
+    </div>
+
+    <footer class="site-footer">
+      <div class="footer-columns">
+        <div class="footer-col">
+          <h4>About NutriGo</h4>
+          <p>Empowering teens to build healthy eating habits, one meal at a time.</p>
+        </div>
+        <div class="footer-col">
+          <h4>Quick Links</h4>
+          <a href="dashboard.html">Dashboard</a>
+          <a href="submit.html">Log Meal</a>
+          <a href="about.html">About</a>
+        </div>
+        <div class="footer-col">
+          <h4>Connect</h4>
+          <div class="social-links">
+            <a href="#">📷 Instagram</a>
+            <a href="#">👍 Facebook</a>
+            <a href="#">🐦Twitter</a>
+          </div>
+        </div>
+        <div class="footer-col">
+          <h4>Legal</h4>
+          <a href="privacy.html">Privacy Policy</a>
+          <a href="terms.html">Terms of Use</a>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <p>&copy; 2025 NutriGo. All Rights Reserved.</p>
+      </div>
+    </footer>
+  </div>
+
+  <script src="dashboard.js"></script>
+</body>
+</html>
