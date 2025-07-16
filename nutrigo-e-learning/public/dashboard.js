@@ -6,9 +6,9 @@ document.getElementById('logout').onclick = () => {
   location.href = 'index.html';
 };
 
-
-// personalized greeting & date
+// Show today's date
 document.getElementById('currentDate').textContent = new Date().toLocaleDateString();
+
 async function fetchUserInfo() {
   const res = await fetch('/api/user/me', {
     headers: { Authorization: 'Bearer ' + token }
@@ -19,7 +19,15 @@ async function fetchUserInfo() {
   }
 }
 
-// fetch meals stats + activity
+// 💡 Updated badge logic
+function getStatusBadge(status) {
+  if (status === 'passed') return `<span class="badge passed">🎉 Task Passed</span>`;
+  if (status === 'completed') return `<span class="badge completed">✅ Completed</span>`;
+  if (status === 'in_progress') return `<span class="badge in-progress">⏳ In Progress</span>`;
+  return `<span class="badge not-started">🔒 Not Started</span>`;
+}
+
+// 📊 Stats + activity
 async function fetchStats() {
   const res = await fetch('/api/user/stats', {
     headers: { Authorization: 'Bearer ' + token }
@@ -38,26 +46,66 @@ async function fetchStats() {
   }
 }
 
-// fetch courses and show cards
-async function fetchCourses() {
-  const res = await fetch('/api/courses', {
+// 🧠 Track user progress
+let userProgress = {};
+
+async function fetchUserProgress() {
+  const res = await fetch('http://localhost:5000/api/user/progress', {
     headers: { Authorization: 'Bearer ' + token }
   });
-  if (!res.ok) return alert('Failed to load courses.');
-  const courses = await res.json();
+
+  if (!res.ok) return console.error('Failed to fetch progress');
+
+  const data = await res.json();
+  data.forEach(p => {
+    userProgress[p.course_id] = p.status || 'not_started';
+  });
+}
+
+// 📚 Show courses
+async function fetchCourses() {
+  const res = await fetch('http://localhost:5000/api/courses', {
+    headers: { Authorization: 'Bearer ' + token }
+  });
+
+  let courses = await res.json();
+  courses.sort((a, b) => a.id - b.id); // Ensure ordered
+
   const grid = document.getElementById('coursesGrid');
   grid.innerHTML = '';
 
-  courses.forEach(course => {
+  courses.forEach((course, index) => {
+    const status = userProgress[course.id] || 'not_started';
+    let isLocked = false;
+
+    // 🔐 Lock unless previous course is PASSED
+    if (index > 0) {
+      const prevCourse = courses[index - 1];
+      const prevStatus = userProgress[prevCourse.id] || 'not_started';
+      if (prevStatus !== 'passed') {
+        isLocked = true;
+      }
+    }
+
+    const badge = getStatusBadge(status);
     const card = document.createElement('div');
     card.className = 'course-card';
+    if (isLocked) card.classList.add('locked');
+
+    const buttonHTML = isLocked
+      ? `<button style="opacity: 0.5; cursor: not-allowed;">🔒 Locked</button>`
+      : `<button onclick="go(${course.id})">View</button>`;
+
     card.innerHTML = `
-      <img src="${course.ref_image || 'placeholder.jpg'}" alt="Course image">
+      <img src="${course.ref_image}" alt="Course image" />
       <div class="content">
         <h3>${course.title}</h3>
-        <p>${course.description || ''}</p>
-        <button onclick="go('${course.id}')">View</button>
-      </div>`;
+        <p>${course.description}</p>
+        ${badge}
+        ${buttonHTML}
+      </div>
+    `;
+
     grid.appendChild(card);
   });
 }
@@ -75,9 +123,11 @@ const tips = [
 document.getElementById('dailyTip').textContent =
   tips[new Date().getDay() % tips.length];
 
-
-window.onload = () => {
-  fetchUserInfo();
-  fetchStats();
-  fetchCourses();
+async function initDashboard() {
+  await fetchUserInfo();
+  await fetchStats();
+  await fetchUserProgress();
+  await fetchCourses();
 }
+
+window.onload = initDashboard;

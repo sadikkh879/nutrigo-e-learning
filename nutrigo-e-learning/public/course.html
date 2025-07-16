@@ -1,11 +1,13 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF‑8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>NutriGo – Course</title>
   <link rel="stylesheet" href="course.css" />
 </head>
+
 <body>
   <div class="course-wrapper">
     <header class="course-header">
@@ -16,6 +18,16 @@
       <!-- Content will load here -->
     </div>
 
+    <section id="taskSection" style="margin-top: 2rem; display: none;">
+      <h3>📸 Upload Your Meal</h3>
+      <p>Prepare your version of this meal and upload a picture. We'll compare it automatically.</p>
+      <form id="taskForm" enctype="multipart/form-data">
+        <input type="file" id="mealImage" name="mealImage" accept="image/*" required />
+        <button type="submit">Submit Meal</button>
+      </form>
+    </section>
+
+
     <div class="course-confirm">
       <button id="completeBtn">✅ Mark as Completed</button>
     </div>
@@ -23,4 +35,5 @@
 
   <script src="course.js"></script>
 </body>
+
 </html>

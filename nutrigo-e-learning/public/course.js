@@ -13,6 +13,22 @@ function convertToEmbed(url) {
   return url;
 }
 
+let userProgress = {};
+let taskShown = false;
+
+async function fetchUserProgress() {
+  const res = await fetch('http://localhost:5000/api/user/progress', {
+    headers: { Authorization: 'Bearer ' + token }
+  });
+
+  if (!res.ok) return console.error('❌ Failed to fetch progress');
+  const data = await res.json();
+
+  data.forEach(p => {
+    userProgress[p.course_id] = p.status || 'not_started';
+  });
+}
+
 async function fetchCourse() {
   const res = await fetch(`http://localhost:5000/api/courses/${courseId}`, {
     headers: { Authorization: 'Bearer ' + token }
@@ -21,14 +37,12 @@ async function fetchCourse() {
   if (!res.ok) return alert('Failed to load course.');
   const course = await res.json();
 
-  // Set title
+  // Title
   document.getElementById('courseTitle').textContent = course.title;
 
-  // Clear content container
+  // Render blocks
   const contentDiv = document.getElementById('courseContent');
   contentDiv.innerHTML = '';
-
-  // Render blocks
   course.blocks.forEach(block => {
     let el;
 
@@ -54,9 +68,39 @@ async function fetchCourse() {
 
     contentDiv.appendChild(el);
   });
+
+  // Check if task is passed
+  const taskRes = await fetch(`http://localhost:5000/api/user/task/${courseId}/status`, {
+    headers: { Authorization: 'Bearer ' + token }
+  });
+
+  const taskData = await taskRes.json();
+  if (taskData.passed) {
+    document.getElementById('completeBtn').style.display = 'block';
+  } else {
+    document.getElementById('completeBtn').style.display = 'none';
+  }
+
+  // Show task section if course is completed
+  if (userProgress[courseId] === 'completed') {
+    document.getElementById('taskSection').style.display = 'block';
+    taskShown = true;
+  }
 }
 
+// 🔄 Mark as in_progress on load
+(async () => {
+  await fetchUserProgress();
 
+  await fetch(`http://localhost:5000/api/courses/${courseId}/start`, {
+    method: 'POST',
+    headers: { Authorization: 'Bearer ' + token }
+  });
+
+  await fetchCourse();
+})();
+
+// ✅ Handle course completion
 document.getElementById('completeBtn').addEventListener('click', async () => {
   const res = await fetch(`http://localhost:5000/api/courses/${courseId}/complete`, {
     method: 'POST',
@@ -69,9 +113,35 @@ document.getElementById('completeBtn').addEventListener('click', async () => {
 
   if (res.ok) {
     alert('Marked as completed! You may now proceed to the task.');
+    document.getElementById('taskSection').style.display = 'block';
+    taskShown = true;
   } else {
-    alert('Something went wrong.');
+    const data = await res.json();
+    alert(data.message || 'Something went wrong.');
   }
 });
 
-fetchCourse();
+// 🖼 Handle task image submission
+document.getElementById('taskForm').addEventListener('submit', async e => {
+  e.preventDefault();
+  const form = new FormData();
+  const imageFile = document.getElementById('mealImage').files[0];
+  if (!imageFile) return alert('Please select an image.');
+
+  form.append('mealImage', imageFile);
+
+  const res = await fetch(`http://localhost:5000/api/user/task/${courseId}`, {
+    method: 'POST',
+    headers: { Authorization: 'Bearer ' + token },
+    body: form
+  });
+
+  const data = await res.json();
+  if (res.ok) {
+    alert('Image uploaded! Comparing...');
+    // Optional: refresh page or fetchCourse() to update button visibility
+    location.reload();
+  } else {
+    alert(data.message || 'Failed to upload image');
+  }
+});
