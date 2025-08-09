@@ -75,16 +75,20 @@ async function fetchCourse() {
   });
 
   const taskData = await taskRes.json();
-  if (taskData.passed) {
-    document.getElementById('completeBtn').style.display = 'block';
-  } else {
-    document.getElementById('completeBtn').style.display = 'none';
+  if (!taskData.passed) {
+    document.getElementById('successTask').style.display = 'none';
+    document.getElementById('unsuccessTask').style.display = 'none';
   }
 
   // Show task section if course is completed
   if (userProgress[courseId] === 'completed') {
     document.getElementById('taskSection').style.display = 'block';
+    document.getElementById('completeBtn').style.display= 'none';
+    document.getElementById('unsuccessTask').style.display = 'none';
     taskShown = true;
+  } else if (userProgress[courseId] === 'passed'){
+    document.getElementById('completeBtn').style.display= 'none';
+    document.getElementById('unsuccessTask').style.display = 'none';
   }
 }
 
@@ -92,7 +96,7 @@ async function fetchCourse() {
 (async () => {
   await fetchUserProgress();
 
-  await fetch(`http://localhost:5000/api/courses/${courseId}/start`, {
+  await fetch(`/api/user/course/${courseId}/start`, {
     method: 'POST',
     headers: { Authorization: 'Bearer ' + token }
   });
@@ -102,7 +106,7 @@ async function fetchCourse() {
 
 // ✅ Handle course completion
 document.getElementById('completeBtn').addEventListener('click', async () => {
-  const res = await fetch(`http://localhost:5000/api/courses/${courseId}/complete`, {
+  const res = await fetch(`http://localhost:5000/api/user/course/${courseId}/complete`, {
     method: 'POST',
     headers: {
       Authorization: 'Bearer ' + token,
@@ -113,13 +117,21 @@ document.getElementById('completeBtn').addEventListener('click', async () => {
 
   if (res.ok) {
     alert('Marked as completed! You may now proceed to the task.');
-    document.getElementById('taskSection').style.display = 'block';
-    taskShown = true;
+
+    // ✅ Refetch progress and show task section
+    await fetchUserProgress();
+    if (userProgress[courseId] === 'completed') {
+      document.getElementById('taskSection').style.display = 'block';
+      document.getElementById('completeBtn').style.display = 'none';
+      document.getElementById('unsuccessTask').style.display = 'none';
+      taskShown = true;
+    }
   } else {
     const data = await res.json();
     alert(data.message || 'Something went wrong.');
   }
 });
+
 
 // 🖼 Handle task image submission
 document.getElementById('taskForm').addEventListener('submit', async e => {
@@ -136,12 +148,33 @@ document.getElementById('taskForm').addEventListener('submit', async e => {
     body: form
   });
 
-  const data = await res.json();
-  if (res.ok) {
-    alert('Image uploaded! Comparing...');
-    // Optional: refresh page or fetchCourse() to update button visibility
-    location.reload();
+  // const data = await res.json();
+  // if (res.ok) {
+  //   alert('Image uploaded! Comparing...');
+  //   // Optional: refresh page or fetchCourse() to update button visibility
+  //   location.reload();
+  //   document.getElementById('taskSection').style.display = 'none';
+  // } else {
+  //   alert(data.message || 'Failed to upload image');
+  // }
+
+const data = await res.json();
+if (res.ok) {
+  alert(`${data.message} Similarity: ${data.similarity}%`);
+  if (data.passed) {
+    // optionally auto-redirect to the next course page or refresh dashboard
+    setTimeout(() => location.href = '/dashboard.html', 1200);
   } else {
-    alert(data.message || 'Failed to upload image');
+  const unsuccessDiv = document.getElementById('unsuccessTask');
+  const imgs = unsuccessDiv.getElementsByTagName('img');
+  
+  // first image is the "Try again" banner — skip it
+  imgs[1].src = data.refImageUrl;   // reference image
+  imgs[2].src = data.imageUrl;      // uploaded image
+
+  //document.getElementById('similarityScore').innerText = `Similarity: ${data.similarity}%`
+  
+  unsuccessDiv.style.display = 'block';
   }
+}
 });
