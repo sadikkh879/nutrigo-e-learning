@@ -1,0 +1,176 @@
+* {
+  margin: 0; padding: 0; box-sizing: border-box;
+}
+body {
+  font-family: 'Montserrat', sans-serif;
+  line-height: 1.6;
+  color: #333;
+}
+.container {
+  width: 90%;
+  max-width: 1100px;
+  margin: auto;
+}
+
+/* Header */
+header {
+  background: #fff;
+  padding: 1rem 0;
+  border-bottom: 1px solid #eee;
+}
+.nav-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.logo {
+  color: #27ae60;
+  font-weight: 700;
+}
+.logo span {
+  color: #2ecc71;
+}
+.nav-links {
+  list-style: none;
+  display: flex;
+  gap: 1.5rem;
+}
+.nav-links a {
+  text-decoration: none;
+  color: #333;
+}
+.btn-primary, .btn-secondary {
+  padding: 0.5rem 1.2rem;
+  border-radius: 4px;
+  text-decoration: none;
+  font-weight: bold;
+}
+.btn-primary {
+  background: #27ae60;
+  color: #fff;
+}
+.btn-secondary {
+  background: #2ecc71;
+  color: #fff;
+}
+
+/* Hero */
+.hero-slideshow {
+  position: relative;
+  width: 100%;
+  height: 500px; /* adjust */
+  overflow: hidden;
+}
+
+.slides {
+  position: relative;
+  height: 100%;
+}
+
+.slide {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+}
+
+.slide img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.fade {
+  animation-name: fadeEffect;
+  animation-duration: 1s;
+}
+
+@keyframes fadeEffect {
+  from {opacity: 0.4}
+  to {opacity: 1}
+}
+
+/* Overlay text */
+.hero-text {
+  position: absolute;
+  width: 100%;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center;
+  background: rgba(0,0,0,0.4);
+  color: #fff;
+  padding: 1rem 2rem;
+  border-radius: 8px;
+}
+
+
+/* Sections */
+section {
+  padding: 3rem 0;
+}
+h3 {
+  text-align: center;
+  margin-bottom: 1.5rem;
+}
+
+/* Features */
+.features .grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit,minmax(220px,1fr));
+  gap: 1.5rem;
+}
+.feature-card {
+  background: #f9f9f9;
+  padding: 1.5rem;
+  border-radius: 8px;
+  text-align: center;
+}
+
+/* Courses */
+.courses .grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit,minmax(250px,1fr));
+  gap: 1.5rem;
+}
+.course-card img {
+  max-width: 100%;
+  border-radius: 8px;
+}
+.course-card h4 {
+  margin-top: 0.8rem;
+}
+
+/* Testimonials */
+.testimonials .grid {
+  display: grid;
+  gap: 1.5rem;
+}
+blockquote {
+  background: #f4f4f4;
+  padding: 1rem;
+  border-radius: 8px;
+  font-style: italic;
+}
+
+/* Contact */
+.contact {
+  text-align: center;
+}
+
+/* Footer */
+footer {
+  background: #27ae60;
+  color: #fff;
+  text-align: center;
+  padding: 1rem 0;
+}
+.footer-content {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.social-links a {
+  color: #fff;
+  text-decoration: none;
+}
