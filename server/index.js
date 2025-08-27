@@ -19,12 +19,25 @@ app.use('/api/admin', adminRoutes);
 app.use('/api/user', userRoutes);
 
 // Set up MySQL connection pool
-app.locals.pool = mysql.createPool({
-  host: process.env.DB_HOST,
-  user: process.env.DB_USER,
-  password: process.env.DB_PASS,
-  database: process.env.DB_NAME,
-});
+async function initDb() {
+  try {
+    app.locals.pool = mysql.createPool({
+      host: process.env.DB_HOST,
+      user: process.env.DB_USER,
+      password: process.env.DB_PASS,
+      database: process.env.DB_NAME,
+    });
+    // Try a quick query to confirm connection
+    await app.locals.pool.query('SELECT 1');
+    console.log('✅ Database connected');
+  } catch (err) {
+    console.error('⚠️ Database connection failed:', err.message);
+    app.locals.pool = null; // Prevents routes from using a bad pool
+  }
+}
+
+initDb();
+
 
 // Routes
 app.use(express.static(path.join(__dirname, '..', 'public')));
@@ -33,9 +46,5 @@ app.use('/api/auth', authRoutes);
 // Server listen
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
-
-function go(id) {
-  window.location.href = `course.html?id=${id}`;
-}
 
 
