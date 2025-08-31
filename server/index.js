@@ -1,6 +1,7 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
+const fs = require('fs');
 const mysql = require('mysql2/promise');
 const authRoutes = require('./routes/auth');
 const path = require ('path');
@@ -23,9 +24,15 @@ async function initDb() {
   try {
     app.locals.pool = mysql.createPool({
       host: process.env.DB_HOST,
-      user: process.env.DB_USER,
-      password: process.env.DB_PASS,
-      database: process.env.DB_NAME,
+  port: process.env.DB_PORT,
+  user: process.env.DB_USER,
+  password: process.env.DB_PASSWORD,
+  database: process.env.DB_NAME,
+  ssl: {
+    ca: fs.readFileSync('./ca.pem'),
+    rejectUnauthorized: true
+  },
+  connectTimeout: 30000
     });
     // Try a quick query to confirm connection
     await app.locals.pool.query('SELECT 1');
