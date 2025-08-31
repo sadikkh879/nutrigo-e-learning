@@ -32,7 +32,7 @@ async function initDb() {
         ca: fs.readFileSync(path.join(__dirname, 'ca.pem')),
         rejectUnauthorized: true
       },
-      connectTimeout: 30000
+      // connectTimeout: 30000
     });
     // Try a quick query to confirm connection
     await app.locals.pool.query('SELECT 1');
