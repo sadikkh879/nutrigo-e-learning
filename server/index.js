@@ -4,8 +4,8 @@ const cors = require('cors');
 const fs = require('fs');
 const mysql = require('mysql2/promise');
 const authRoutes = require('./routes/auth');
-const path = require ('path');
-const auth = require ('./middlewares/auth');
+const path = require('path');
+const auth = require('./middlewares/auth');
 const coursesRoutes = require('./routes/courses');
 const adminRoutes = require('./routes/admin');
 const userRoutes = require('./routes/user');
@@ -24,15 +24,15 @@ async function initDb() {
   try {
     app.locals.pool = mysql.createPool({
       host: process.env.DB_HOST,
-  port: process.env.DB_PORT,
-  user: process.env.DB_USER,
-  password: process.env.DB_PASSWORD,
-  database: process.env.DB_NAME,
-  ssl: {
-    ca: fs.readFileSync('./ca.pem'),
-    rejectUnauthorized: true
-  },
-  connectTimeout: 30000
+      port: process.env.DB_PORT,
+      user: process.env.DB_USER,
+      password: process.env.DB_PASSWORD,
+      database: process.env.DB_NAME,
+      ssl: {
+        ca: fs.readFileSync(path.join(__dirname, 'ca.pem')),
+        rejectUnauthorized: true
+      },
+      connectTimeout: 30000
     });
     // Try a quick query to confirm connection
     await app.locals.pool.query('SELECT 1');
