@@ -50,7 +50,7 @@ async function fetchStats() {
 let userProgress = {};
 
 async function fetchUserProgress() {
-  const res = await fetch('http://localhost:5000/api/user/progress', {
+  const res = await fetch('/api/user/progress', {
     headers: { Authorization: 'Bearer ' + token }
   });
 
@@ -64,7 +64,7 @@ async function fetchUserProgress() {
 
 // 📚 Show courses
 async function fetchCourses() {
-  const res = await fetch('http://localhost:5000/api/courses', {
+  const res = await fetch('/api/courses', {
     headers: { Authorization: 'Bearer ' + token }
   });
 

@@ -17,7 +17,7 @@ let userProgress = {};
 let taskShown = false;
 
 async function fetchUserProgress() {
-  const res = await fetch('http://localhost:5000/api/user/progress', {
+  const res = await fetch('/api/user/progress', {
     headers: { Authorization: 'Bearer ' + token }
   });
 
@@ -30,7 +30,7 @@ async function fetchUserProgress() {
 }
 
 async function fetchCourse() {
-  const res = await fetch(`http://localhost:5000/api/courses/${courseId}`, {
+  const res = await fetch(`/api/courses/${courseId}`, {
     headers: { Authorization: 'Bearer ' + token }
   });
 
@@ -70,7 +70,7 @@ async function fetchCourse() {
   });
 
   // Check if task is passed
-  const taskRes = await fetch(`http://localhost:5000/api/user/task/${courseId}/status`, {
+  const taskRes = await fetch(`/api/user/task/${courseId}/status`, {
     headers: { Authorization: 'Bearer ' + token }
   });
 
@@ -106,7 +106,7 @@ async function fetchCourse() {
 
 // ✅ Handle course completion
 document.getElementById('completeBtn').addEventListener('click', async () => {
-  const res = await fetch(`http://localhost:5000/api/user/course/${courseId}/complete`, {
+  const res = await fetch(`/api/user/course/${courseId}/complete`, {
     method: 'POST',
     headers: {
       Authorization: 'Bearer ' + token,
@@ -142,7 +142,7 @@ document.getElementById('taskForm').addEventListener('submit', async e => {
 
   form.append('mealImage', imageFile);
 
-  const res = await fetch(`http://localhost:5000/api/user/task/${courseId}`, {
+  const res = await fetch(`/api/user/task/${courseId}`, {
     method: 'POST',
     headers: { Authorization: 'Bearer ' + token },
     body: form
