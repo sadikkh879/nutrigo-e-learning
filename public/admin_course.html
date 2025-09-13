@@ -1,63 +1,74 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>NutriGo — Admin Dashboard</title>
-  <link rel="stylesheet" href="admin_course.css" />
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>NutriGo — Admin Dashboard</title>
+    <link rel="stylesheet" href="admin_course.css" />
 </head>
+
 <body>
-  <aside class="sidebar">
-    <h2>NutriGo Admin</h2>
-    <nav>
-      <a href="">Courses</a>
-      <a href="admin.html" class="active">Add Course</a>
-      <a href="">Student Progress</a>
-      <a href="index.html" style="background-color: red;">Logout</a>
+    <aside class="sidebar">
+        <h2>NutriGo Admin</h2>
+        <nav>
+            <a href="">Courses</a>
+            <a href="admin.html" class="active">Add Course</a>
+            <a href="">Student Progress</a>
+            <a href="index.html" style="background-color: red;">Logout</a>
 
-    </nav>
-  </aside>
+        </nav>
+    </aside>
 
-    <div class="cards" id="coursesGrid"></div>
+    <body>
+        <aside class="sidebar">…</aside>
+        <div class="content">
+            <div class="cards" id="coursesGrid"></div>
+        </div>
+    </body>
 
-<script>
+    <script>
 
-    const token = localStorage.getItem('token'); 
-    if (!token) location.href = 'index.html';
+        const token = localStorage.getItem('token');
+        if (!token) location.href = 'index.html';
 
-async function fetchCourses() {
-  const res = await fetch('/api/admin/fetch_course', {
-    headers: { Authorization: 'Bearer ' + token }
-  });
+        async function fetchCourses() {
+            const res = await fetch('/api/admin/fetch_course', {
+                headers: { Authorization: 'Bearer ' + token }
+            });
 
-  let courses = await res.json();
-  courses.sort((a, b) => a.id - b.id);
+            let courses = await res.json();
+            courses.sort((a, b) => a.id - b.id);
 
-  const grid = document.getElementById('coursesGrid');
-  grid.innerHTML = '';
+            const grid = document.getElementById('coursesGrid');
+            grid.innerHTML = '';
 
-  courses.forEach(course => {
-    const card = document.createElement('div');
-    card.classList.add('course-card');
+            courses.forEach(course => {
+                const card = document.createElement('div');
+                card.classList.add('course-card');
 
-    const badge = `<span class="badge">New</span>`;
-    const buttonHTML = `<button>View</button>`;
+                //const badge = `<span class="badge">New</span>`;
+                const buttonHTML = `<button onclick="go(${course.id})" >View</button>`;
 
-    card.innerHTML = `
+                card.innerHTML = `
       <img src="${course.ref_image}" alt="Course image" />
       <div class="content">
         <h3>${course.title}</h3>
         <p>${course.description}</p>
-        ${badge}
         ${buttonHTML}
       </div>
     `;
-    grid.appendChild(card);
-  });
-}
+                grid.appendChild(card);
+            });
+        }
 
-document.addEventListener('DOMContentLoaded', fetchCourses);
+        function go(id) {
+            window.location.href = `course.html?id=${id}`;
+        }
+
+        document.addEventListener('DOMContentLoaded', fetchCourses);
 
     </script>
 </body>
+
 </html>
