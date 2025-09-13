@@ -39,8 +39,8 @@ router.post('/register', async (req, res) => {
 
     // Send email
     const transporter = nodemailer.createTransport({
-  host: 'smtp.sendgrid.net',
-  port: 2525,
+  host: 'live.smtp.mailtrap.io',
+  port: 587,
   auth: {
     user: process.env.SMTP_USER, // usually 'apikey' for SendGrid
     pass: process.env.SMTP_PASS
