@@ -1,0 +1,155 @@
+body {
+  display: flex;
+  margin: 0;
+  font-family: Arial, sans-serif;
+  height: 100vh;
+}
+.sidebar {
+  background: #2e3b4e;
+  color: white;
+  width: 220px;
+  padding: 2rem 1rem;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+}
+.sidebar h2 {
+  margin: 0 0 2rem;
+  font-size: 1.4rem;
+}
+.sidebar nav a {
+  display: block;
+  color: #cfd8e3;
+  padding: 0.75rem 0;
+  text-decoration: none;
+  margin-bottom: 0.5rem;
+  border-radius: 4px;
+}
+.sidebar nav a.active,
+.sidebar nav a:hover {
+  background: #1b2433;
+  color: white;
+}
+.content {
+  flex: 1;
+  padding: 2rem;
+  background: #f4f6f8;
+  overflow-y: auto;
+}
+.content h1 {
+  margin-top: 0;
+}
+.form-group {
+  margin-bottom: 1.5rem;
+}
+label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: bold;
+}
+input[type="text"],
+textarea,
+input[type="file"] {
+  width: 100%;
+  padding: 0.6rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  box-sizing: border-box;
+}
+textarea {
+  min-height: 100px;
+  resize: vertical;
+}
+.btn {
+  background: #4caf50;
+  color: white;
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 1rem;
+}
+.btn:hover {
+  background: #449d48;
+}
+
+
+/* Container for all course cards */
+.cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 1.5rem;
+  padding: 2rem;
+  height: fit-content;
+}
+
+/* Individual course card */
+.course-card {
+  background: #fff;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.course-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+}
+
+/* Course image */
+.course-card img {
+  width: 100%;
+  height: 160px;
+  object-fit: cover;
+}
+
+/* Content inside the card */
+.course-card .content {
+  padding: 1rem;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.course-card h3 {
+  font-size: 1.1rem;
+  margin: 0 0 0.5rem;
+  color: #333;
+}
+
+.course-card p {
+  font-size: 0.9rem;
+  color: #666;
+  flex: 1;
+}
+
+/* Badge styling */
+.badge {
+  display: inline-block;
+  background: #4caf50;
+  color: white;
+  font-size: 0.75rem;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  margin-top: 0.5rem;
+}
+
+/* Button styling */
+.course-card button {
+  margin-top: 1rem;
+  padding: 0.5rem;
+  background: #2196f3;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  transition: background 0.2s ease;
+}
+
+.course-card button:hover {
+  background: #1976d2;
+}

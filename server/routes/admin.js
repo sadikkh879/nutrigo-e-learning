@@ -1,7 +1,13 @@
 const express = require('express');
+const multer = require('multer');
 const router = express.Router();
 const auth = require('../middlewares/auth');
-const upload = require('../middlewares/upload');
+//const upload = require('../middlewares/upload');
+const { BlobServiceClient } = require('@azure/storage-blob');
+require('dotenv').config();
+const upload = multer({ storage: multer.memoryStorage() });
+const containerName = 'nutrigoimages';
+const blobServiceClient = BlobServiceClient.fromConnectionString(process.env.AZURE_STORAGE_CONNECTION_STRING);
 
 // POST /api/admin/courses – add a new course
 router.post('/courses', auth, upload.single('refImage'), async (req, res) => {
@@ -9,13 +15,25 @@ router.post('/courses', auth, upload.single('refImage'), async (req, res) => {
   if (req.user.role !== 'admin') return res.status(403).json({ message: 'Access denied' });
   if (!req.file) return res.status(400).json({ message: 'Reference image is required' });
 
-  const refImage = `/uploads/${req.file.filename}`;
+  //const refImage = `/uploads/${req.file.filename}`;
 
   try {
+
+    // Upload to Azure Blob Storage
+    const containerClient = blobServiceClient.getContainerClient(containerName);
+    const blobName = `${Date.now()}-${req.file.originalname}`;
+    const blockBlobClient = containerClient.getBlockBlobClient(blobName);
+
+    await blockBlobClient.uploadData(req.file.buffer, {
+      blobHTTPHeaders: { blobContentType: req.file.mimetype }
+    });
+
+    const imageUrl = blockBlobClient.url;
+
     const pool = req.app.locals.pool;
     const [result] = await pool.query(
       'INSERT INTO courses (title, description, ref_image) VALUES (?, ?, ?)',
-      [title, description, refImage]
+      [title, description, imageUrl]
     );
     const courseId = result.insertId;
 
@@ -25,7 +43,6 @@ router.post('/courses', auth, upload.single('refImage'), async (req, res) => {
     res.status(500).json({ message: 'DB error when creating course.' });
   }
 });
-
 
 // POST /api/admin/courses/:id/blocks
 router.post('/courses/:id/blocks', auth, async (req, res) => {
@@ -57,6 +74,20 @@ router.post('/courses/:id/blocks', auth, async (req, res) => {
   } catch (err) {
     console.error('❌ Error inserting blocks:', err);
     res.status(500).json({ message: 'Failed to save content blocks.' });
+  }
+});
+
+// Admin course fetch
+router.get('/fetch_course', async (req, res) => {
+  const pool = req.app.locals.pool;
+  try {
+    const [rows] = await pool.query(
+      'SELECT id, title, description, ref_image FROM courses'
+    );
+    res.json(rows);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Error fetching courses.' });
   }
 });
 
