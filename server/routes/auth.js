@@ -40,7 +40,7 @@ router.post('/register', async (req, res) => {
     // Send email
 const transporter = nodemailer.createTransport({
   host: process.env.SMTP_HOST,
-  port: process.env.SMTP_PORT,
+  port: 2525,
   secure: false, // true for port 465, false for 587/2525
   auth: {
     user: process.env.SMTP_USERS,
@@ -48,8 +48,8 @@ const transporter = nodemailer.createTransport({
   }
 });
 
-    //const verificationLink = `${process.env.BACKEND_URL}/api/auth/verify-email?token=${token}`;
-    const verificationLink = `http://localhost:5000/api/auth/verify-email?token=${token}`;
+    const verificationLink = `${process.env.BACKEND_URL}/api/auth/verify-email?token=${token}`;
+    //const verificationLink = `http://localhost:5000/api/auth/verify-email?token=${token}`;
 
     await transporter.sendMail({
       from: 'Nutrigo <emilyygreyy749@gmail.com>',
