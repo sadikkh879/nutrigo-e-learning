@@ -38,20 +38,21 @@ router.post('/register', async (req, res) => {
     );
 
     // Send email
-    const transporter = nodemailer.createTransport({
-  host: 'live.smtp.mailtrap.io',
-  port: 587,
+const transporter = nodemailer.createTransport({
+  host: process.env.SMTP_HOST,
+  port: process.env.SMTP_PORT,
+  secure: false, // true for port 465, false for 587/2525
   auth: {
-    user: process.env.SMTP_USER, // usually 'apikey' for SendGrid
-    pass: process.env.SMTP_PASS
+    user: process.env.SMTP_USERS,
+    pass: process.env.SMTP_PASSWORD
   }
 });
 
-    const verificationLink = `${process.env.BACKEND_URL}/api/auth/verify-email?token=${token}`;
-    //const verificationLink = `http://localhost:5000/api/auth/verify-email?token=${token}`;
+    //const verificationLink = `${process.env.BACKEND_URL}/api/auth/verify-email?token=${token}`;
+    const verificationLink = `http://localhost:5000/api/auth/verify-email?token=${token}`;
 
     await transporter.sendMail({
-      from: `"NutriGo" <${process.env.EMAIL_USER}>`,
+      from: 'Nutrigo <emilyygreyy749@gmail.com>',
       to: email,
       subject: 'Verify your NutriGo email',
       html: `<p>Hi ${firstName},</p>
