@@ -78,6 +78,8 @@ async function fetchCourse() {
   if (!taskData.passed) {
     document.getElementById('successTask').style.display = 'none';
     document.getElementById('unsuccessTask').style.display = 'none';
+  }else{
+    document.getElementById('successTask').style.display = 'block';
   }
 
   // Show task section if course is completed
