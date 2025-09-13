@@ -39,12 +39,13 @@ router.post('/register', async (req, res) => {
 
     // Send email
     const transporter = nodemailer.createTransport({
-      service: 'gmail',
-      auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS
-      }
-    });
+  host: 'smtp.sendgrid.net',
+  port: 2525,
+  auth: {
+    user: process.env.SMTP_USER, // usually 'apikey' for SendGrid
+    pass: process.env.SMTP_PASS
+  }
+});
 
     const verificationLink = `${process.env.BACKEND_URL}/api/auth/verify-email?token=${token}`;
     //const verificationLink = `http://localhost:5000/api/auth/verify-email?token=${token}`;
