@@ -3,7 +3,7 @@ if (!token) location.href = 'index.html';
 
 document.getElementById('logout').onclick = () => {
   localStorage.clear();
-  location.href = 'index.html';
+  location.href = 'landing.html';
 };
 
 // Show today's date

@@ -1,8 +1,14 @@
 const express = require('express');
 const auth = require('../middlewares/auth');
+const multer = require('multer');
 const router = express.Router();
-const upload = require('../middlewares/upload');
+//const upload = require('../middlewares/upload');
 const sharp = require('sharp');
+const { BlobServiceClient } = require('@azure/storage-blob');
+require('dotenv').config();
+const upload = multer({ storage: multer.memoryStorage() });
+const containerName = 'nutrigoimages';
+const blobServiceClient = BlobServiceClient.fromConnectionString(process.env.AZURE_STORAGE_CONNECTION_STRING);
 let pixelmatch;
 (async () => {
   pixelmatch = (await import('pixelmatch')).default;
@@ -60,20 +66,12 @@ router.get('/progress', auth, async (req, res) => {
   const userId = req.user.id;
 
   try {
-    const [progress] = await pool.query(`
-      SELECT
-        p.course_id,
-        CASE
-          WHEN t.passed = 1 THEN 'passed'
-          WHEN p.status = 'completed' THEN 'completed'
-          WHEN p.status = 'in_progress' THEN 'in_progress'
-          ELSE 'not_started'
-        END AS status
-      FROM user_courses p
-      LEFT JOIN user_tasks t ON t.user_id = p.user_id AND t.course_id = p.course_id
-      WHERE p.user_id = ?
-    `, [userId]);
-
+    const [progress] = await pool.query(
+  `SELECT course_id, status
+   FROM user_courses
+   WHERE user_id = ?`,
+  [userId]
+);
     res.json(progress);
   } catch (err) {
     console.error('❌ Failed to fetch user progress:', err);
@@ -91,99 +89,122 @@ router.post('/task/:courseId', auth, upload.single('mealImage'), async (req, res
   }
 
   const pool = req.app.locals.pool;
-  const uploadedPath = req.file.path; // physical path on disk
-  // keep track of inserted row id so we can update it later
   let insertedId = null;
 
   try {
-    // 1) Insert the user_tasks row first (so we have an id)
+    // 1) Upload submitted image to Azure
+    const containerClient = blobServiceClient.getContainerClient(containerName);
+    const blobName = `${Date.now()}-${req.file.originalname}`;
+    const blockBlobClient = containerClient.getBlockBlobClient(blobName);
+
+    await blockBlobClient.uploadData(req.file.buffer, {
+      blobHTTPHeaders: { blobContentType: req.file.mimetype }
+    });
+
+    const imageUrl = blockBlobClient.url;
+
+    // 2) Insert into user_tasks
     const [insertResult] = await pool.query(
       `INSERT INTO user_tasks (user_id, course_id, image_url) VALUES (?, ?, ?)`,
-      [userId, courseId, `/uploads/${req.file.filename}`]
+      [userId, courseId, imageUrl]
     );
     insertedId = insertResult.insertId;
 
-    // 2) Find the course reference image path (physical path)
-    const [[courseRow]] = await pool.query('SELECT ref_image FROM courses WHERE id = ?', [courseId]);
+    // 3) Get reference image URL from DB
+    const [[courseRow]] = await pool.query(
+      'SELECT ref_image FROM courses WHERE id = ?',
+      [courseId]
+    );
     if (!courseRow || !courseRow.ref_image) {
-      // cannot compare if reference doesn't exist
       return res.status(400).json({ message: 'Course reference image not found; uploaded saved.' });
     }
 
-    // ref_image stored like '/uploads/filename'
     const refImageUrl = courseRow.ref_image;
-    // remove leading slash then join to server uploads directory
-    const refImageRel = refImageUrl.replace(/^\//, '');
-    const refImagePath = path.join(__dirname, '..', refImageRel); // server/uploads/filename
 
-    // 3) Normalize both images to same size and PNG format
-    const SIZE = 256; // resolution to compare (tradeoff: speed vs detail)
-    const uploadedBuf = await sharp(uploadedPath)
+    // 4) Download reference image from Azure
+    const refBlobName = decodeURIComponent(refImageUrl.split('/').pop());
+    const refBlockBlobClient = containerClient.getBlockBlobClient(refBlobName);
+    const downloadResponse = await refBlockBlobClient.download();
+    const refImageBuffer = await streamToBuffer(downloadResponse.readableStreamBody);
+
+    // 5) Normalize both images to same size and PNG format
+    const SIZE = 256;
+    const uploadedBuf = await sharp(req.file.buffer)
       .resize(SIZE, SIZE, { fit: 'cover' })
       .png()
       .toBuffer();
 
-    const refBuf = await sharp(refImagePath)
+    const refBuf = await sharp(refImageBuffer)
       .resize(SIZE, SIZE, { fit: 'cover' })
       .png()
       .toBuffer();
 
-    // 4) Read PNGs into pngjs structures
+    // 6) Compare with pixelmatch
     const img1 = PNG.sync.read(uploadedBuf);
     const img2 = PNG.sync.read(refBuf);
 
-    // sanity: ensure same dims
     const { width, height } = img1;
     if (width !== img2.width || height !== img2.height) {
-      // should not happen due to resize, but just in case
       return res.status(500).json({ message: 'Image size mismatch during comparison' });
     }
 
-    // 5) Compare with pixelmatch
     const diff = new PNG({ width, height });
     const diffPixels = pixelmatch(img1.data, img2.data, diff.data, width, height, {
-      threshold: 0.12, // tweakable: 0.08-0.15 typical
+      threshold: 0.12,
     });
 
     const totalPixels = width * height;
-    const similarity = 1 - diffPixels / totalPixels; // 0..1 (1 = identical)
-    const similarityPercent = Math.round(similarity * 10000) / 100; // two decimals
+    const similarity = 1 - diffPixels / totalPixels;
+    const similarityPercent = Math.round(similarity * 10000) / 100;
 
-    // 6) Decide pass/fail
-    const PASS_THRESHOLD = 0.60; // 60% similarity -> pass (you can tune)
+    // 7) Decide pass/fail
+    const PASS_THRESHOLD = 0.60;
     const passed = similarity >= PASS_THRESHOLD ? 1 : 0;
 
-    // 7) Update the user_tasks row with computed values
+    // 8) Update user_tasks with results
     await pool.query(
       'UPDATE user_tasks SET similarity_score = ?, passed = ? WHERE id = ?',
       [similarityPercent, passed, insertedId]
     );
 
-    // 8) If passed: promote user_progress to 'passed' so next course unlocks
+    // 9) If passed, mark course as completed in user_progress
     if (passed) {
       await pool.query(
-        `INSERT INTO user_progress (user_id, course_id, status, completed_at)
+        `INSERT INTO user_courses (user_id, course_id, status, completed_at)
          VALUES (?, ?, 'passed', NOW())
          ON DUPLICATE KEY UPDATE status = 'passed', completed_at = NOW()`,
         [userId, courseId]
       );
     }
 
-    // 9) Return result to client
+    // 10) Respond with Azure URLs
     res.json({
-      message: passed ? 'Task passed! Next course unlocked.' : 'Task submitted — not similar enough. Try again.',
+      message: passed
+        ? 'Task passed! Next course unlocked.'
+        : 'Task submitted — not similar enough. Try again.',
       similarity: similarityPercent,
       passed: !!passed,
-      imageUrl: `/uploads/${req.file.filename}`, // uploaded image
-      refImageUrl: refImageUrl // send reference image
+      imageUrl,       // Azure URL of uploaded image
+      refImageUrl     // Azure URL of reference image
     });
+
   } catch (err) {
     console.error('❌ Task upload/compare error:', err);
-
-    // If we inserted a DB row but then failed, you may want to keep it or clean it up.
     return res.status(500).json({ message: 'Server error during task processing' });
   }
 });
+
+// Helper: convert Azure stream to buffer
+async function streamToBuffer(readableStream) {
+  return new Promise((resolve, reject) => {
+    const chunks = [];
+    readableStream.on('data', (data) =>
+      chunks.push(data instanceof Buffer ? data : Buffer.from(data))
+    );
+    readableStream.on('end', () => resolve(Buffer.concat(chunks)));
+    readableStream.on('error', reject);
+  });
+}
 
 
 // GET /api/user/task/:courseId/status — check if task passed
@@ -216,6 +237,10 @@ router.post('/course/:id/start', auth, async (req, res) => {
       'SELECT status FROM user_courses WHERE user_id = ? AND course_id = ?',
       [userId, courseId]
     );
+
+    if (rows.length && rows[0].status === 'passed') {
+      return res.json({ message: 'Already passed. No change.' });
+    }
 
     if (rows.length && rows[0].status === 'completed') {
       return res.json({ message: 'Already completed. No change.' });
@@ -253,6 +278,10 @@ router.post('/course/:id/complete', auth, async (req, res) => {
       'SELECT * FROM user_courses WHERE user_id = ? AND course_id = ?',
       [userId, courseId]
     );
+
+    if (rows.length && rows[0].status === 'passed') {
+      return res.json({ message: 'Already passed. No change.' });
+    }
 
     if (rows.length) {
       await pool.query(
