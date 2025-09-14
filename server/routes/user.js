@@ -305,4 +305,32 @@ router.post('/course/:id/complete', auth, async (req, res) => {
   }
 });
 
+router.get('/progress_course', auth, async (req, res) => {
+  const pool = req.app.locals.pool;
+  const userId = req.user.id;
+
+  try {
+    const [rows] = await pool.query(
+      `SELECT course_id FROM user_courses WHERE status = 'passed' AND user_id = ?`,
+      [userId]
+    );
+
+    const courseIds = rows.map(r => r.course_id);
+    if (courseIds.length === 0) return res.json([]);
+
+    const placeholders = courseIds.map(() => '?').join(',');
+    const [courses] = await pool.query(
+      `SELECT * FROM courses WHERE id IN (${placeholders})`,
+      courseIds
+    );
+
+    res.json(courses);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Error fetching passed courses.' });
+  }
+});
+
+
+
 module.exports = router;

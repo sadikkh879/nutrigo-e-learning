@@ -43,4 +43,36 @@ router.get('/:id', auth, async (req, res) => {
   }
 });
 
+router.get('/progress_course', async (req, res) => {
+  const pool = req.app.locals.pool;
+  const userId = req.user.id;
+
+  try {
+    // 1. Get passed course IDs
+    const [rows] = await pool.query(
+      `SELECT course_id FROM user_course WHERE status = 'passed' AND user_id = ?`,
+      [userId]
+    );
+
+    const courseIds = rows.map(r => r.course_id);
+
+    // 2. If no passed courses, return empty array
+    if (courseIds.length === 0) {
+      return res.json([]);
+    }
+
+    // 3. Fetch matching courses
+    const placeholders = courseIds.map(() => '?').join(',');
+    const [courses] = await pool.query(
+      `SELECT * FROM courses WHERE id IN (${placeholders})`,
+      courseIds
+    );
+
+    res.json(courses);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Error fetching passed courses.' });
+  }
+});
+
 module.exports = router;
